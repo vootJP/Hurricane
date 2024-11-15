@@ -3850,6 +3850,8 @@ public class OptWnd extends Window {
 			colorCheckboxesMap.put(color, Utils.getprefb("enableMarkerUpload" + color.getRGB(), false));
 		}
 	}
+	public static TextEntry cookBookURLTextEntry;
+	public static TextEntry cookBookTokenTextEntry;
 
 	public class ServerIntegrationSettingsPanel extends Panel {
 
@@ -3914,6 +3916,24 @@ public class OptWnd extends Window {
 				};
 				prev = add(colorCheckbox, prev.pos("ur").adds(10, 0));
 			}
+
+
+			prev = add(new Label("Cook Book Integration"), prev.pos("bl").adds(0, 20).x(UI.scale(110)));
+			prev = add(new Label("Cook Book URL:"), prev.pos("bl").adds(0, 16).x(0));
+			prev = add(cookBookURLTextEntry = new TextEntry(UI.scale(220), Utils.getpref("cookBookURL", "")){
+				protected void changed() {
+					Utils.setpref("cookBookURL", this.buf.line());
+					super.changed();
+				}
+			}, prev.pos("ur").adds(25, 0));
+
+			prev = add(new Label("Cook Book Token:"), prev.pos("bl").adds(0, 12).x(0));
+			prev = add(cookBookTokenTextEntry = new TextEntry(UI.scale(220), Utils.getpref("cookBookToken", "")){
+				protected void changed() {
+					Utils.setpref("cookBookToken", this.buf.line());
+					super.changed();
+				}
+			}, prev.pos("ur").adds(16, 0));
 
 			Widget backButton;
 			add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), prev.pos("bl").adds(0, 18).x(0));
