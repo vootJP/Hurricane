@@ -27,6 +27,8 @@
 package haven;
 
 import java.util.*;
+
+import haven.automated.cookbook.RecipeCollector;
 import haven.render.*;
 import haven.res.ui.tt.q.qbuff.QBuff;
 import haven.res.ui.tt.q.quality.Quality;
@@ -209,6 +211,11 @@ public class GItem extends AWidget implements ItemInfo.SpriteOwner, GSprite.Owne
 	    if(pg != null)
 		info.add(new ItemInfo.Pagina(this, pg.text));
 	    this.info = info;
+		try {
+			RecipeCollector.processRecipe(ui.gui, info, getres().name);
+		} catch (NullPointerException ex){
+			System.out.println("Problem with adding new food to cookbook.");
+		}
 	}
 	return(this.info);
     }
