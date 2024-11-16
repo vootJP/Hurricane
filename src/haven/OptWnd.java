@@ -26,6 +26,7 @@
 
 package haven;
 
+import haven.automated.cookbook.RecipeCollector;
 import haven.render.*;
 import haven.res.gfx.fx.msrad.MSRad;
 import haven.res.ui.pag.toggle.Toggle;
@@ -3923,6 +3924,7 @@ public class OptWnd extends Window {
 			prev = add(cookBookURLTextEntry = new TextEntry(UI.scale(220), Utils.getpref("cookBookURL", "")){
 				protected void changed() {
 					Utils.setpref("cookBookURL", this.buf.line());
+					RecipeCollector.cookbookURL = this.buf.line();
 					super.changed();
 				}
 			}, prev.pos("ur").adds(25, 0));
@@ -3931,6 +3933,7 @@ public class OptWnd extends Window {
 			prev = add(cookBookTokenTextEntry = new TextEntry(UI.scale(220), Utils.getpref("cookBookToken", "")){
 				protected void changed() {
 					Utils.setpref("cookBookToken", this.buf.line());
+					RecipeCollector.cookbookToken = this.buf.line();
 					super.changed();
 				}
 			}, prev.pos("ur").adds(16, 0));

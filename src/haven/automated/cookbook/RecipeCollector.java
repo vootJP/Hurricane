@@ -19,8 +19,8 @@ import java.util.*;
 import java.util.concurrent.*;
 
 public class RecipeCollector {
-    private static String cookbookURL = Utils.getpref("cookBookURL", "");
-    private static String cookbookToken = Utils.getpref("cookBookToken", "");
+    public static String cookbookURL = Utils.getpref("cookBookURL", "");
+    public static String cookbookToken = Utils.getpref("cookBookToken", "");
 
     private static final Map<String, ParsedFoodInfo> cachedItems = new ConcurrentHashMap<>();
     private static final Queue<HashedFoodInfo> sendQueue = new ConcurrentLinkedQueue<>();
@@ -92,19 +92,19 @@ public class RecipeCollector {
 //                todo rather annoying spam so temp. disabled.
 //                System.out.println("Successfully sent " + foodInfos.size() + " new recipes.");
             } else {
-                System.err.println("Failed to send food items. HTTP Response Code: " + responseCode);
+//                System.err.println("Failed to send food items. HTTP Response Code: " + responseCode);
                 try (InputStream errorStream = connection.getErrorStream()) {
                     if (errorStream != null) {
                         String errorResponse = new String(errorStream.readAllBytes(), StandardCharsets.UTF_8);
-                        System.err.println("Error Response: " + errorResponse);
+//                        System.err.println("Error Response: " + errorResponse);
                     }
                 }
             }
             connection.disconnect();
         } catch (IOException e) {
-            System.err.println("IOException while sending HTTP request: " + e.getMessage());
+//            System.err.println("IOException while sending HTTP request: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Unexpected exception while sending HTTP request: " + e.getMessage());
+//            System.err.println("Unexpected exception while sending HTTP request: " + e.getMessage());
         }
     }
 
@@ -122,7 +122,7 @@ public class RecipeCollector {
             toSend.add(info.foodInfo);
         }
 
-        if (!toSend.isEmpty()) {
+        if (!toSend.isEmpty() && !RecipeCollector.cookbookURL.isEmpty()) {
             sendToHttpServer(toSend);
         }
     }
@@ -145,9 +145,7 @@ public class RecipeCollector {
             MessageDigest digest = MessageDigest.getInstance("MD5");
             byte[] hash = digest.digest(stringBuilder.toString().getBytes(StandardCharsets.UTF_8));
             return getHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println("Cannot generate food hash");
-        }
+        } catch (NoSuchAlgorithmException ignored) {}
         return null;
     }
 
