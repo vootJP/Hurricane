@@ -35,6 +35,7 @@ import java.util.function.*;
 import java.lang.reflect.*;
 import java.util.stream.Collectors;
 
+import haven.automated.MiningSafetyAssistant;
 import haven.automated.helpers.AreaSelectCallback;
 import haven.automated.pathfinder.PFListener;
 import haven.automated.pathfinder.Pathfinder;
@@ -2160,6 +2161,14 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 		Long gobid = new Long((Integer) inf.clickargs()[1]);
 		Gob gob = glob.oc.getgob(gobid);
 			if(gob != null) {
+				if (OptWnd.clickThroughCupboardDecalCheckBox.a && !ui.modctrl) {
+					try {
+						if (gob.getres().name.contains("cupboard") && (int)args[2] == 3) {
+							args[4] = 0;
+							args[7] = 0;
+						}
+					} catch (Exception ignored){}
+				}
 				if (ui.modmeta && ui.gui.vhand == null) {
 					Map<String, ChatUI.MultiChat> chats = ui.gui.chat.getMultiChannels();
 					if (clickb == 1 && (!ui.modshift || !ui.modctrl)) {
@@ -2970,6 +2979,34 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	@Override
 	public void wdgmsg(String msg, Object... args) {
 		super.wdgmsg(msg, args);
+		GameUI gui = ui.gui;
+		if (gui != null && gui.refillWaterContainersThread != null && gui.refillWaterContainersThread.isAlive()){
+			if (msg.equals("drop")){
+				gui.refillWaterContainersThread.interrupt();
+				gui.refillWaterContainersThread = null;
+				gui.ui.msg("Water Refill was manually stopped (One container was also dropped).");
+			} else if (msg.equals("click")){
+				if (args.length == 4) {
+					if (args[2].toString().equals("1")) {
+						gui.refillWaterContainersThread.interrupt();
+						gui.refillWaterContainersThread = null;
+						gui.ui.msg("Water Refill was manually stopped.");
+					}
+				}
+			}
+		}
+		boolean safe = true;
+		if(MiningSafetyAssistant.preventMiningOutsideSupport){
+			Resource curs = ui.root.getcurs(Coord.z);
+			if (curs != null && curs.name.equals("gfx/hud/curs/mine") && msg.equals("sel")) {
+				safe = MiningSafetyAssistant.isAreaInSupportRange((Coord) args[0], (Coord) args[1], ui.gui);
+			}
+		}
+		if(safe){
+			super.wdgmsg(msg, args);
+		} else {
+			ui.error("Tile outside all (visible) support range. Preventing mining command");
+		}
 		if (msg.equals("click")){
 			try {
 				int clickb = (Integer)args[2];
