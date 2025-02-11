@@ -14,18 +14,18 @@
   <target name="make-buildinfo" depends="build-env">
     <touch file="build/classes/buildinfo" datetime="01/01/2000 12:00 am" />
     <loadproperties srcFile="build/classes/buildinfo" prefix="buildinfo." />
-    <exec executable="git" outputproperty="git-rev" failifexecutionfails="false">
+    <exec executable="git" outputproperty="new-git-rev" failifexecutionfails="false">
       <arg line="rev-parse HEAD" />
     </exec>
     <condition property="buildinfo-unchanged">
-      <equals arg1="${buildinfo.git-rev}" arg2="${git-rev}" />
+      <equals arg1="${buildinfo.git-rev}" arg2="${new-git-rev}" />
     </condition>
   </target>
 
   <target name="buildinfo" depends="make-buildinfo" unless="buildinfo-unchanged">
     <echo message="Updating buildinfo" />
     <echo file="build/classes/buildinfo" xml:space="default">
-      git-rev = ${git-rev}
+      git-rev = ${new-git-rev}
     </echo>
   </target>
 
@@ -38,15 +38,15 @@
       <local name="@{name}-files" />
       <mkdir dir="@{path}" />
       <loadresource property="@{name}-files">
-	<url url="@{url}/lib-files" />
-	<filterchain>
-	  <prefixlines prefix="@{url}/" />
-	</filterchain>
+        <url url="@{url}/lib-files" />
+        <filterchain>
+          <prefixlines prefix="@{url}/" />
+        </filterchain>
       </loadresource>
       <get dest="@{path}/" usetimestamp="true">
-	<resourcelist>
-	  <propertyresource name="@{name}-files" />
-	</resourcelist>
+        <resourcelist>
+          <propertyresource name="@{name}-files" />
+        </resourcelist>
       </get>
       <touch file="@{path}/has-@{name}" />
     </sequential>
@@ -79,18 +79,18 @@
 
   <target name="hafen-client" depends="build-env, extlib/jogl, extlib/lwjgl-gl, extlib/steamworks">
     <javac srcdir="src" destdir="build/classes" debug="on"
-	   source="15" target="15" includeantruntime="no"
-	   bootclasspath="${boot-classpath}">
+           source="15" target="15" includeantruntime="no"
+           bootclasspath="${boot-classpath}">
       <classpath>
-	<pathelement path="lib/ext/jogl/jogl-all.jar" />
-	<pathelement path="lib/ext/jogl/gluegen-rt.jar" />
-	<pathelement path="lib/ext/lwjgl/lwjgl-fat.jar" />
-	<pathelement path="lib/ext/lwjgl/lwjgl-awt.jar" />
-	<pathelement path="lib/ext/lwjgl/lwjgl-opengl-fat.jar" />
-	<pathelement path="lib/ext/steamworks/steamworks4j.jar" />
-	<pathelement path="lib/jglob.jar" />
-      <pathelement path="lib/rxjava-1.1.5.jar" />
-    <pathelement path="lib/sqlite-jdbc-3.42.0.0.jar" />
+        <pathelement path="lib/ext/jogl/jogl-all.jar" />
+        <pathelement path="lib/ext/jogl/gluegen-rt.jar" />
+        <pathelement path="lib/ext/lwjgl/lwjgl-fat.jar" />
+        <pathelement path="lib/ext/lwjgl/lwjgl-awt.jar" />
+        <pathelement path="lib/ext/lwjgl/lwjgl-opengl-fat.jar" />
+        <pathelement path="lib/ext/steamworks/steamworks4j.jar" />
+        <pathelement path="lib/jglob.jar" />
+        <pathelement path="lib/rxjava-1.1.5.jar" />
+        <pathelement path="lib/sqlite-jdbc-3.42.0.0.jar" />
       </classpath>
       <compilerarg value="-Xlint:unchecked" />
       <compilerarg value="-Xlint:-options" />
@@ -119,8 +119,8 @@
       <fileset dir="build/classes" />
       <fileset dir="build/classes-lib" />
       <manifest>
-	<attribute name="Main-Class" value="haven.MainFrame" />
-	<attribute name="Class-Path" value="jogl-all.jar gluegen-rt.jar lwjgl-fat.jar lwjgl-awt.jar lwjgl-opengl-fat.jar steamworks4j.jar builtin-res.jar hafen-res.jar sqlite-jdbc-3.42.0.0.jar" />
+        <attribute name="Main-Class" value="haven.MainFrame" />
+        <attribute name="Class-Path" value="jogl-all.jar gluegen-rt.jar lwjgl-fat.jar lwjgl-awt.jar lwjgl-opengl-fat.jar steamworks4j.jar builtin-res.jar hafen-res.jar sqlite-jdbc-3.42.0.0.jar" />
       </manifest>
     </jar>
     <chmod file="build/hafen.jar" perm="a+x" />
@@ -128,9 +128,9 @@
 
   <target name="res-jar" depends="build-env" unless="has-res-jar">
     <get src="${ext-lib-base}/builtin-res.jar" dest="lib/ext/builtin-res.jar"
-	 usetimestamp="true" />
+         usetimestamp="true" />
     <get src="${ext-lib-base}/hafen-res.jar" dest="lib/ext/hafen-res.jar"
-	 usetimestamp="true" />
+         usetimestamp="true" />
     <available property="lib-res-jar" file="lib/ext/hafen-res.jar" />
     <fail unless="lib-res-jar" message="hafen-res.jar not available" />
     <available property="lib-builtin-jar" file="lib/ext/builtin-res.jar" />
@@ -140,8 +140,8 @@
   <target name="jars" depends="build-env, jar, extlib/jogl, extlib/lwjgl-gl, extlib/steamworks">
     <copy todir="build" failonerror="false" quiet="true">
       <fileset dir="lib">
-	<include name="builtin-res.jar" />
-	<include name="hafen-res.jar" />
+        <include name="builtin-res.jar" />
+        <include name="hafen-res.jar" />
       </fileset>
     </copy>
     <copy todir="build">
@@ -156,14 +156,14 @@
     <mkdir dir="bin" />
     <copy todir="bin">
       <fileset dir="build">
-	<include name="hafen.jar" />
+        <include name="hafen.jar" />
       </fileset>
       <fileset dir="lib">
-    <include name="sqlite-jdbc-3.42.0.0.jar"/>
+        <include name="sqlite-jdbc-3.42.0.0.jar"/>
       </fileset>
       <fileset dir="lib/ext">
-	<include name="hafen-res.jar" />
-	<include name="builtin-res.jar" />
+        <include name="hafen-res.jar" />
+        <include name="builtin-res.jar" />
       </fileset>
       <fileset dir="lib/ext/jogl"><include name="*.jar" /></fileset>
       <fileset dir="lib/ext/lwjgl"><include name="*.jar" /></fileset>
