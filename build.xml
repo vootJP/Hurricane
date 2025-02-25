@@ -196,7 +196,6 @@
   <target name="run" depends="bin">
     <exec dir="bin/" executable="cmd">
       <arg value="/c"/>
-      <arg value = "start"/>
       <arg value="Play.bat"/>
     </exec>
   </target>

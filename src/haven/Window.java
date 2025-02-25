@@ -55,8 +55,8 @@ public class Window extends Widget {
     public static final Coord brm = UI.scale(13, 22);
 	public static final Coord cpo = UI.rscale(27, 13); // ND: This is the location of the window title text
     public static final int capo = 7, capio = 2;
-    public static final Coord dlmrgn = UI.scale(24, 18);
-    public static final Coord dsmrgn = UI.scale(12, 12);
+    public static final Coord dlmrgn = UI.scale(5, 10);  // 20250226
+    public static final Coord dsmrgn = UI.scale(5, 10);  // 20250226
     public static final BufferedImage ctex = Resource.loadsimg("gfx/hud/fonttex");
     public static final Text.Furnace cf = new Text.Imager(new PUtils.TexFurn(new Text.Foundry(Text.fraktur, 15).aa(true), ctex)) {
 	    protected BufferedImage proc(Text text) {
@@ -182,6 +182,11 @@ public class Window extends Widget {
     public static class DefaultDeco extends DragDeco {
 	public final boolean lg;
 	public final IButton cbtn;
+
+	// grok 20250226
+	// Adjustable background transparency (0.0 = fully transparent, 1.0 = fully opaque
+	public final float bgAlpha = 0.7f;
+
 	public boolean dragsize;
 	public Area aa, ca;
 	public Coord cptl = Coord.z, cpsz = Coord.z;
@@ -222,6 +227,7 @@ public class Window extends Widget {
 
 	protected void drawbg(GOut g) {
 	    g.usestate(bgblend);
+		g.chcolor(255, 255, 255, (int)(bgAlpha * 255)); // grok 20250226 // Apply transparency to background
 	    Coord bgc = new Coord();
 	    for(bgc.y = ca.ul.y; bgc.y < ca.br.y; bgc.y += bg.sz().y) {
 		for(bgc.x = ca.ul.x; bgc.x < ca.br.x; bgc.x += bg.sz().x)
@@ -236,6 +242,7 @@ public class Window extends Widget {
 	    for(bgc.y = ca.ul.y; bgc.y < ca.br.y; bgc.y += bgr.sz().y)
 		g.image(bgr, bgc, ca.ul, ca.br);
 		}
+		g.defstate(); // grok 20250226 // Reset state after background
 	}
 
 	protected void drawframe(GOut g) {

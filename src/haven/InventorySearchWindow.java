@@ -7,7 +7,7 @@ public class InventorySearchWindow extends Window {
     private final GameUI gui;
 
     public InventorySearchWindow(GameUI gui) {
-        super(UI.scale(140, 35), "Inventory search:", true);
+        super(UI.scale(140, 30), "Inventory search:", true);
         this.gui = gui;
         inventorySearchString = "";
         TextEntry entry = new TextEntry(UI.scale(150), inventorySearchString) {
