@@ -1819,6 +1819,7 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 	public static KeyBinding kb_toggleHidingBoxes  = KeyBinding.get("toggleHidingBoxesKB",  KeyMatch.forchar('H', KeyMatch.C));
 	public static KeyBinding kb_toggleCollisionBoxes  = KeyBinding.get("toggleCollisionBoxesKB",  KeyMatch.forchar('B', KeyMatch.S));
 	public static KeyBinding kb_toggleGrowthInfo  = KeyBinding.get("toggleGrowthInfoKB",  KeyMatch.forchar('I',  KeyMatch.C | KeyMatch.S));
+	public static KeyBinding kb_toggleSpeedInfo  = KeyBinding.get("toggleSpeedInfoKB",  KeyMatch.forchar('S',  KeyMatch.C | KeyMatch.S));
 	public static KeyBinding kb_toggleCursorItem = KeyBinding.get("toggleCursorItemKB",  KeyMatch.nil);
 	public static KeyBinding kb_lootNearestKnockedPlayer = KeyBinding.get("lootNearestKnockedPlayerKB",  KeyMatch.forchar('D', KeyMatch.S));
 	public static KeyBinding kb_instantLogout = KeyBinding.get("instantLogoutKB",  KeyMatch.nil);
@@ -1954,6 +1955,9 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 		return(true);
 	} else if(kb_toggleGrowthInfo.key().match(ev)) {
 		OptWnd.displayGrowthInfoCheckBox.set(!OptWnd.displayGrowthInfoCheckBox.a);
+		return(true);
+	} else if(kb_toggleSpeedInfo.key().match(ev)) {
+		OptWnd.showObjectsSpeedCheckBox.set(!OptWnd.showObjectsSpeedCheckBox.a);
 		return(true);
 	} else if(kb_toggleCursorItem.key().match(ev)) {
 		toggleCursorItem();
@@ -2810,21 +2814,36 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 		List<String> command = List.of("ping", pingCommand, "1", gameServer);
 
 		String output;
+		Process process = null;
 		try {
-			Process process = new ProcessBuilder(command).start();
+			process = new ProcessBuilder(command).start();
+
+			// Set a timeout of 500 milliseconds for the process
+			if (!process.waitFor(500, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+				// If the process did not complete within 500ms, destroy it and return null
+				process.destroy();
+				System.err.println("Ping command timed out. You're failing to ping game.havenandhearth.com due to some DNS issue. You need to manually edit your Hosts file.");
+				return null;
+			}
+
 			try (BufferedReader standardOutput = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
 				output = standardOutput.lines().collect(Collectors.joining());
 			}
-		} catch (IOException e) {
+
+		} catch (IOException | InterruptedException e) {
 			System.err.println("Failed to execute ping command: " + e.getMessage());
 			return null;
+		} finally {
+			if (process != null && process.isAlive()) {
+				process.destroy();
+			}
 		}
 
 		Matcher matcher = pattern.matcher(output);
 		if (matcher.find()) {
 			String matchedPing = matcher.group(1);
 			try {
-				return (int)Double.parseDouble(matchedPing);
+				return (int) Double.parseDouble(matchedPing);
 			} catch (NumberFormatException e) {
 				System.err.println("Failed to parse ping value: " + matchedPing);
 			}

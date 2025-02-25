@@ -38,6 +38,7 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -633,6 +634,7 @@ public class OptWnd extends Window {
 	public static CheckBox alwaysShowCombatUIHealthBarCheckBox;
 	public static HSlider mapZoomSpeedSlider;
 	public static CheckBox alwaysOpenMiniStudyOnLoginCheckBox;
+	public static HSlider mapIconsSizeSlider;
 
     public class InterfaceSettingsPanel extends Panel {
 	public InterfaceSettingsPanel(Panel back) {
@@ -841,6 +843,43 @@ public class OptWnd extends Window {
 		add(new Button(UI.scale(60), "Reset", false).action(() -> {
 			mapZoomSpeedSlider.val = 15;
 			Utils.setprefi("mapZoomSpeed", 15);
+		}), rightColumn.pos("ur").adds(6, -4));
+
+		rightColumn = add(new Label("Map Icons Size:"), rightColumn.pos("bl").adds(0, 10).x(UI.scale(230)));
+		rightColumn = add(mapIconsSizeSlider = new HSlider(UI.scale(110), 16, 40, Utils.getprefi("mapIconsSize", 20)) {
+			public void changed() {
+				Utils.setprefi("mapIconsSize", val);
+				GobIcon.size = UI.scale(val);
+				synchronized(GobIcon.Image.cache) {
+					GobIcon.Image.cache.clear();
+				}
+				BufferedImage buf = MiniMap.plpImg.img;
+				buf = PUtils.rasterimg(PUtils.blurmask2(buf.getRaster(), 1, 1, Color.BLACK));
+				Coord tsz;
+				if(buf.getWidth() > buf.getHeight())
+					tsz = new Coord(GobIcon.size, (GobIcon.size * buf.getHeight()) / buf.getWidth());
+				else
+					tsz = new Coord((GobIcon.size * buf.getWidth()) / buf.getHeight(), GobIcon.size);
+				buf = PUtils.convolve(buf, tsz, GobIcon.filter);
+				MiniMap.plp = new TexI(buf);
+			}
+		}, rightColumn.pos("bl").adds(0, 4));
+		add(new Button(UI.scale(60), "Reset", false).action(() -> {
+			mapIconsSizeSlider.val = 20;
+			GobIcon.size = UI.scale(20);
+			synchronized(GobIcon.Image.cache) {
+				GobIcon.Image.cache.clear();
+			}
+			Utils.setprefi("mapIconsSize", 20);
+			BufferedImage buf = MiniMap.plpImg.img;
+			buf = PUtils.rasterimg(PUtils.blurmask2(buf.getRaster(), 1, 1, Color.BLACK));
+			Coord tsz;
+			if(buf.getWidth() > buf.getHeight())
+				tsz = new Coord(GobIcon.size, (GobIcon.size * buf.getHeight()) / buf.getWidth());
+			else
+				tsz = new Coord((GobIcon.size * buf.getWidth()) / buf.getHeight(), GobIcon.size);
+			buf = PUtils.convolve(buf, tsz, GobIcon.filter);
+			MiniMap.plp = new TexI(buf);
 		}), rightColumn.pos("ur").adds(6, -4));
 
 		Widget backButton;
@@ -1422,11 +1461,11 @@ public class OptWnd extends Window {
 	public static CheckBox showCirclesUnderCombatFoesCheckBox;
 	public static ColorOptionWidget combatFoeColorOptionWidget;
 	public static String[] combatFoeColorSetting = Utils.getprefsa("combatFoe" + "_colorSetting", new String[]{"160", "0", "0", "164"});
-
 	public static ColorOptionWidget areaChatPingColorOptionWidget;
 	public static String[] areaChatPingColorSetting = Utils.getprefsa("areaChatPing" + "_colorSetting", new String[]{"255", "183", "0", "255"});
 	public static ColorOptionWidget partyChatPingColorOptionWidget;
 	public static String[] partyChatPingColorSetting = Utils.getprefsa("partyChatPing" + "_colorSetting", new String[]{"243", "0", "0", "255"});
+	public static CheckBox showObjectsSpeedCheckBox;
 
 	public static CheckBox objectPermanentHighlightingCheckBox;
 
@@ -1977,6 +2016,9 @@ public class OptWnd extends Window {
 				{a = (Utils.getprefb("alsoShowOversizedTreesAbovePercentage", true));}
 				public void changed(boolean val) {
 					Utils.setprefb("alsoShowOversizedTreesAbovePercentage", val);
+					if (ui != null && ui.gui != null) {
+						ui.sess.glob.oc.gobAction(Gob::refreshGrowthInfo);
+					}
 				}
 			}, middleColumn.pos("bl").adds(12, 2));
 			add(oversizedTreesPercentageTextEntry = new TextEntry(UI.scale(36), Utils.getpref("oversizedTreesPercentage", "150")){
@@ -2099,6 +2141,17 @@ public class OptWnd extends Window {
 				Utils.setprefsa("partyChatPing" + "_colorSetting", new String[]{"243", "0", "0", "255"});
 				partyChatPingColorOptionWidget.cb.colorChooser.setColor(partyChatPingColorOptionWidget.currentColor = new Color(243, 0, 0, 255));
 			}), partyChatPingColorOptionWidget.pos("ur").adds(10, 0));
+			rightColumn = add(showObjectsSpeedCheckBox = new CheckBox("Show Objects Speed"){
+				{a = Utils.getprefb("showObjectsSpeed", false);}
+				public void set(boolean val) {
+					Utils.setprefb("showObjectsSpeed", val);
+					a = val;
+					if (ui != null && ui.gui != null) {
+						ui.gui.optionInfoMsg("Objects Speed is now " + (val ? "SHOWN" : "HIDDEN") + "!", (val ? msgGreen : msgGray), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+					}
+				}
+			}, rightColumn.pos("bl").adds(0, 12));
+			showObjectsSpeedCheckBox.tooltip = showObjectsSpeedTooltip;
 
 			Widget backButton;
 			add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), leftColumn.pos("bl").adds(0, 18).x(0));
@@ -2431,6 +2484,7 @@ public class OptWnd extends Window {
 		y = addbtn(cont, "Toggle Collision Boxes", GameUI.kb_toggleCollisionBoxes, y);
 		y = addbtn(cont, "Toggle Object Hiding", GameUI.kb_toggleHidingBoxes, y);
 		y = addbtn(cont, "Display Growth Info on Plants", GameUI.kb_toggleGrowthInfo, y);
+		y = addbtn(cont, "Show Objects Speed", GameUI.kb_toggleSpeedInfo, y);
 		y = addbtn(cont, "Hide/Show Cursor Item", GameUI.kb_toggleCursorItem, y);
 		y+=UI.scale(20);
 		y = addbtn(cont, "Loot Nearest Knocked Player", GameUI.kb_lootNearestKnockedPlayer, y);
@@ -3074,6 +3128,8 @@ public class OptWnd extends Window {
 	public static CheckBox flatCupboardsCheckBox;
 	public static CheckBox disableHerbalistTablesVarMatsCheckBox;
 	public static CheckBox disableCupboardsVarMatsCheckBox;
+	public static CheckBox disableChestsVarMatsCheckBox;
+	public static CheckBox disableMetalCabinetsVarMatsCheckBox;
 	public static CheckBox disableTrellisesVarMatsCheckBox;
 	public static CheckBox disableSmokeShedsVarMatsCheckBox;
 	public static CheckBox disableAllObjectsVarMatsCheckBox;
@@ -3083,6 +3139,8 @@ public class OptWnd extends Window {
 	public static CheckBox disableOpiumHighCheckBox;
 	public static CheckBox disableLibertyCapsHighCheckBox;
 	public static CheckBox disableDrunkennessDistortionCheckBox;
+	public static HSlider palisadeAndWallScaleSlider;
+	private Button palisadeAndWallScaleResetButton;
 
 	public class WorldGraphicsSettingsPanel extends Panel {
 
@@ -3226,6 +3284,18 @@ public class OptWnd extends Window {
 					Utils.setprefb("disableCupboardsVarMats", val);
 				}
 			}, leftColumn.pos("bl").adds(0, 2));
+			leftColumn = add(disableChestsVarMatsCheckBox = new CheckBox("Chests Variable Materials"){
+				{a = (Utils.getprefb("disableChestsVarMats", false));}
+				public void changed(boolean val) {
+					Utils.setprefb("disableChestsVarMats", val);
+				}
+			}, leftColumn.pos("bl").adds(0, 2));
+			leftColumn = add(disableMetalCabinetsVarMatsCheckBox = new CheckBox("Metal Cabinets Variable Materials"){
+				{a = (Utils.getprefb("disableMetalCabinetsVarMats", false));}
+				public void changed(boolean val) {
+					Utils.setprefb("disableMetalCabinetsVarMats", val);
+				}
+			}, leftColumn.pos("bl").adds(0, 2));
 			leftColumn = add(disableTrellisesVarMatsCheckBox = new CheckBox("Trellises Variable Materials"){
 				{a = (Utils.getprefb("disableTrellisesVarMats", false));}
 				public void changed(boolean val) {
@@ -3245,6 +3315,27 @@ public class OptWnd extends Window {
 					Utils.setprefb("disableAllObjectsVarMats", val);
 				}
 			}, leftColumn.pos("bl").adds(0, 2));
+
+			leftColumn = add(new Label("Palisades & Walls Scale:"), leftColumn.pos("bl").adds(0, 10).x(0));
+			leftColumn = add(palisadeAndWallScaleSlider = new HSlider(UI.scale(200), 40, 100, Utils.getprefi("palisadeAndWallScale", 100)) {
+				protected void attach(UI ui) {
+					super.attach(ui);
+					val = Utils.getprefi("palisadeAndWallScale", 100);
+				}
+				public void changed() {
+					Utils.setprefi("palisadeAndWallScale", val);
+					if (ui != null && ui.gui != null) {
+						ui.sess.glob.oc.gobAction(Gob::reloadPalisadeScale);
+					}
+				}
+			}, leftColumn.pos("bl").adds(0, 6));
+			add(palisadeAndWallScaleResetButton = new Button(UI.scale(70), "Reset", false).action(() -> {
+				palisadeAndWallScaleSlider.val = 100;
+				if (ui != null && ui.gui != null)
+					ui.sess.glob.oc.gobAction(Gob::reloadPalisadeScale);
+				Utils.setprefi("palisadeAndWallScale", 100);
+			}), leftColumn.pos("bl").adds(210, -20));
+			palisadeAndWallScaleResetButton.tooltip = resetButtonTooltip;
 
 			rightColumn = add(new Label("Trees & Bushes Scale:"), UI.scale(290, 0));
 			rightColumn = add(treeAndBushScaleSlider = new HSlider(UI.scale(200), 30, 100, Utils.getprefi("treeAndBushScale", 100)) {
@@ -3317,7 +3408,7 @@ public class OptWnd extends Window {
 				}
 			}, rightColumn.pos("bl").adds(0, 2));
 
-			rightColumn = add(new Label("World Effects:"), rightColumn.pos("bl").adds(0, 10).x(290));
+			rightColumn = add(new Label("World Effects:"), rightColumn.pos("bl").adds(0, 10).x(UI.scale(290)));
 			rightColumn = add(disableSeasonalGroundColorsCheckBox = new CheckBox("Disable Seasonal Ground Colors"){
 				{a = (Utils.getprefb("disableSeasonalGroundColors", false));}
 				public void changed(boolean val) {
@@ -3394,7 +3485,7 @@ public class OptWnd extends Window {
 			}, rightColumn.pos("bl").adds(0, 2));
 
 			Widget backButton;
-			add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), rightColumn.pos("bl").adds(0, 38));
+			add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), leftColumn.pos("bl").adds(0, 38));
 			pack();
 			centerBackButton(backButton, this);
 		}
@@ -4874,6 +4965,9 @@ public class OptWnd extends Window {
 	private final Object showCirclesUnderPartyMembersTooltip = RichText.render("Enabling this will put a colored circle under all party members." +
 			"\n" +
 			"\n$col[185,185,185]{If you are the party leader, your circle's color will always be the $col[255,255,255]{Leader's Color}.}", UI.scale(300));
+	private final Object showObjectsSpeedTooltip = RichText.render("Enabling this will show the speed of moving objects (Players, Mobs, Vehicles, etc.) below them." +
+			"\n" +
+			"\n$col[218,163,0]{Keybind:} $col[185,185,185]{This can also be toggled using a keybind.}", UI.scale(300));
 
 	// Quality Display Settings Tooltips
 	private final Object customQualityColorsTooltip = RichText.render("These numbers and colors are completely arbitrary, and you can change them to whatever you like." +
